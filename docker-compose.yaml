@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  httpd:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - type: bind
+        source: ./htdocs
+        target: /smrs/htdocs
+      - type: bind
+        source: ./conf
+        target: /smrs/conf
