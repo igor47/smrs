@@ -4,7 +4,7 @@ command = "rustup"
 args = ["target", "add", "x86_64-unknown-linux-musl"]
 
 [tasks.alpine-build]
-dependecies = ["ensure-musl"]
+dependencies = ["ensure-musl"]
 command = "cargo"
 args = ["build", "--target", "x86_64-unknown-linux-musl"]
 
@@ -16,7 +16,7 @@ args = ["up", "-d"]
 script = "docker exec -ti smrs_httpd_1 /bin/sh"
 
 [tasks.iter]
-dependencies = ["build", "devenv"]
+dependencies = ["alpine-build", "devenv"]
 script = [
   "cp target/x86_64-unknown-linux-musl/debug/smrs htdocs/smrs.cgi"
 ]
