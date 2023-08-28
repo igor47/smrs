@@ -1,6 +1,9 @@
 use std::{env, io};
 use std::io::prelude::*;
 
+mod token;
+use token::{TokenType, generate};
+
 const SESSION_COOKIE_NAME: &str = "smrs_session_id";
 const SESSION_COOKIE_MAX_AGE: u64 = 60 * 60 * 24 * 365; // 1 year
 
@@ -123,9 +126,14 @@ impl Response {
     }
 
     fn set_session(&mut self, session_id: Option<&str>) {
+        let generated: String;
+
         let session_id = match session_id {
             Some(session_id) => session_id,
-            None => "hi there",
+            None => {
+                generated = generate(TokenType::Session);
+                &generated
+            }
         };
         self.add_header(
             "Set-Cookie",
