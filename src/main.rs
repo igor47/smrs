@@ -1,5 +1,6 @@
 use std::env;
 
+#[derive(Debug)]
 struct Request {
     method: String,
     uri: String,
@@ -7,6 +8,7 @@ struct Request {
     body: String,
 }
 
+#[derive(Debug)]
 struct Header {
     key: &'static str,
     value: &'static str,
@@ -28,9 +30,15 @@ fn respond(response: &Response) {
 
 fn parse_request() -> Request {
     let request = Request {
-        method: env::var("REQUEST_METHOD").unwrap(),
-        uri: env::var("REQUEST_URI").unwrap(),
-        headers: vec![],
+        method: {
+            env::var("REQUEST_METHOD").unwrap()
+        },
+        uri: {
+            env::var("REQUEST_URI").unwrap()
+        },
+        headers: {
+            vec![]
+        },
         body: String::new(),
     };
 
@@ -44,11 +52,7 @@ fn print_env(request: &Request, response: &mut Response) {
         response.body.push_str(&format!("{0}: {1}\n", key, value));
     }
 
-    response.body.push_str("\nRequest info:\n");
-    response.body.push_str(&format!("Method: {0}\n", request.method));
-    response.body.push_str(&format!("URI: {0}\n", request.uri));
-    response.body.push_str(&format!("headers: {0}\n", request.headers.len()));
-    response.body.push_str(&format!("body: {0}\n", request.body))
+    response.body.push_str(&format!("\nRequest info: {:?}", request));
 }
 
 fn main() {
