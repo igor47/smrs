@@ -1,9 +1,12 @@
 mod token;
 mod cgi;
+mod store;
 
 use std::env;
-use cgi::{Request, Response};
 use serde::{Deserialize, Serialize};
+
+use cgi::{Request, Response};
+use store::{open};
 
 fn print_env(request: &Request, response: &mut Response) {
     response.add_header("Content-Type", "text/plain");
@@ -56,6 +59,14 @@ fn set_session(request: &Request, response: &mut Response) {
 }
 
 fn shorten(request: &Request, response: &mut Response) {
+    let db = match open() {
+        Ok(db) => db,
+        Err(err) => {
+            response.status = 500;
+            response.body = String::from(format!("Failed to open database: {}", err));
+            return;
+        }
+    };
 }
 
 fn redirect(request: &Request, response: &mut Response) {

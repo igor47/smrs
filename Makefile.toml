@@ -13,7 +13,7 @@ command = "docker-compose"
 args = ["up", "-d"]
 
 [tasks.devenv-shell]
-script = "docker exec -ti smrs_httpd_1 /bin/sh"
+script = "docker exec -ti smrs-httpd-1 /bin/sh"
 
 [tasks.iter]
 dependencies = ["alpine-build", "devenv"]
