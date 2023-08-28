@@ -1,6 +1,9 @@
 use std::{env, io};
 use std::io::prelude::*;
 
+const SESSION_COOKIE_NAME: &str = "smrs_session_id";
+const SESSION_COOKIE_MAX_AGE: u64 = 60 * 60 * 24 * 365; // 1 year
+
 #[derive(Debug)]
 struct Header {
     key: String,
@@ -75,12 +78,32 @@ impl Request {
             }
         })
     }
+
+    fn cookie(&self, name: &str) -> Option<&str> {
+        for header in &self.headers {
+            if header.key == "cookie" {
+                let cookies = header.value.split("; ");
+                for cookie in cookies {
+                    let mut parts = cookie.split("=");
+                    let cookie_name = parts.next().unwrap();
+                    let cookie_value = parts.next().unwrap();
+                    if cookie_name == name {
+                        return Some(cookie_value);
+                    }
+                }
+            }
+        }
+
+        None
+    }
 }
 
 struct Response {
     status: u16,
     headers: Vec<Header>,
     body: String,
+
+    session_set: bool,
 }
 
 impl Response {
@@ -89,6 +112,7 @@ impl Response {
             status: 200,
             headers: Vec::new(),
             body: String::new(),
+            session_set: false,
         };
         response.add_header("SMRS-Version", "0.0.1");
         response
@@ -97,14 +121,38 @@ impl Response {
     fn add_header(&mut self, key: &str, value: &str) {
         self.headers.push(Header { key: key.to_string(), value: value.to_string() });
     }
-}
 
-fn respond(response: &Response) {
-    println!("Status: {0}", response.status);
-    for header in &response.headers {
-        println!("{0}: {1}", header.key, header.value);
+    fn set_session(&mut self, session_id: Option<&str>) {
+        let session_id = match session_id {
+            Some(session_id) => session_id,
+            None => "hi there",
+        };
+        self.add_header(
+            "Set-Cookie",
+            &format!(
+                "{}={}; SameSite=strict; Secure; Max-Age={}",
+                SESSION_COOKIE_NAME,
+                session_id,
+                SESSION_COOKIE_MAX_AGE
+            )
+        );
+        self.session_set = true;
     }
-    println!("\n{0}", response.body);
+
+    fn default_session(&mut self, request: &Request) {
+        if self.session_set {
+            return;
+        }
+        self.set_session(request.cookie(SESSION_COOKIE_NAME));
+    }
+
+    fn send(&self) {
+        println!("Status: {0}", self.status);
+        for header in &self.headers {
+            println!("{0}: {1}", header.key, header.value);
+        }
+        println!("\n{0}", self.body);
+    }
 }
 
 fn print_env(request: &Request, response: &mut Response) {
@@ -125,12 +173,13 @@ fn main() {
         Err(err) => {
             response.status = 400;
             response.body = String::from(format!("Invalid request: {}", err));
-            respond(&response);
+            response.send();
             return;
         }
     };
 
     print_env(&request, &mut response);
 
-    respond(&response);
+    response.default_session(&request);
+    response.send();
 }
