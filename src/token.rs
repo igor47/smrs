@@ -1,4 +1,3 @@
-extern crate xkpass;
 use xkpass::{Args, Case, List, generate_password};
 
 pub enum TokenType {

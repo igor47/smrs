@@ -1,6 +1,8 @@
 use std::{env, io};
 use std::io::prelude::*;
 
+use serde::{Serialize, Deserialize};
+
 use crate::token::{TokenType, generate};
 
 const SESSION_COOKIE_NAME: &str = "smrs_session_id";
@@ -103,6 +105,22 @@ impl Request {
         let mut parts = self.uri.split("?");
         parts.next().unwrap()
     }
+
+    pub fn json<'a, T: Deserialize<'a>>(self: &'a Request) -> Result<T, String> {
+        match &self.body {
+            Some(body) => {
+                if body.content_type == "application/json" {
+                    match serde_json::from_str(&body.data) {
+                        Ok(data) => Ok(data),
+                        Err(err) => Err(format!("Failed to parse JSON: {:?}", err)),
+                    }
+                } else {
+                    Err("Invalid content type".to_string())
+                }
+            },
+            None => Err("Request body is missing".to_string())
+        }
+    }
 }
 
 pub struct Response {
@@ -163,6 +181,17 @@ impl Response {
             println!("{0}: {1}", header.key, header.value);
         }
         println!("\n{0}", self.body);
+    }
+
+    pub fn json<T: Serialize>(&mut self, data: &T) {
+        self.add_header("Content-Type", "application/json");
+        match serde_json::to_string(data) {
+            Ok(body) => self.body = body,
+            Err(_) => {
+                self.status = 500;
+                self.body = String::from(r#"{{"error": "Failed to serialize response"}}"#);
+            }
+        }
     }
 }
 

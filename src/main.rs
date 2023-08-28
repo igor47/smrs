@@ -3,6 +3,7 @@ mod cgi;
 
 use std::env;
 use cgi::{Request, Response};
+use serde::{Deserialize, Serialize};
 
 fn print_env(request: &Request, response: &mut Response) {
     response.add_header("Content-Type", "text/plain");
@@ -20,32 +21,50 @@ fn not_found(response: &mut Response) {
     response.body = String::from("Not found");
 }
 
+#[derive(Serialize)]
+struct ShowSessionResp {
+    session: String,
+}
+
 fn show_session(request: &Request, response: &mut Response) {
     response.default_session(&request);
+    response.json(&ShowSessionResp {
+        session: response.session.as_ref().unwrap().to_string(),
+    });
+}
 
-    response.add_header("Content-Type", "text/javascript");
-    response.body = format!(r#"{{"session": "{}"}}"#, response.session.as_ref().unwrap());
+#[derive(Deserialize)]
+struct SetSessionReq {
+    session: String,
 }
 
 fn set_session(request: &Request, response: &mut Response) {
-    match &request.body {
-        Some(body) => {
-            if body.content_type == "text/javascript" {
-                // parse JSON here
-                // {"session": "1234"}
-                //              ^-- char 14 
-                let session = &body.data[14..(body.data.len() - 2)];
-                response.set_session(Some(session));
-            } else {
-                response.status = 400;
-                response.body = String::from("Invalid content type");
-            }
+    let set_session = request.json::<SetSessionReq>();
+    match set_session {
+        Ok(set_session) => {
+            response.set_session(Some(&set_session.session));
+            response.json(&ShowSessionResp {
+                session: response.session.as_ref().unwrap().to_string(),
+            });
         },
-        None => {
+        Err(err) => {
             response.status = 400;
-            response.body = String::from("No session provided");
+            response.add_header("Content-Type", "text/plain");
+            response.body = String::from(format!("Invalid request: {}", err));
         }
     }
+}
+
+fn shorten(request: &Request, response: &mut Response) {
+}
+
+fn redirect(request: &Request, response: &mut Response) {
+}
+
+fn list(request: &Request, response: &mut Response) {
+}
+
+fn forget(request: &Request, response: &mut Response) {
 }
 
 fn main() {
@@ -68,10 +87,17 @@ fn main() {
         show_session(&request, &mut response);
     } else if (request.method == "POST") && (request.path() == "/session") {
         set_session(&request, &mut response);
+    } else if (request.method == "GET") && (request.path().starts_with("/to/")) {
+        redirect(&request, &mut response);
+    } else if (request.method == "POST") && (request.path() == "/save") {
+        shorten(&request, &mut response);
+    } else if (request.method == "GET") && (request.path() == "/list") {
+        list(&request, &mut response);
+    } else if (request.method == "POST") && (request.path() == "/forget") {
+        forget(&request, &mut response);
     } else {
         not_found(&mut response);
     }
-
 
     response.default_session(&request);
     response.send();
