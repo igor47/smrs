@@ -1,6 +1,12 @@
 use std::env;
 
 #[derive(Debug)]
+struct Header {
+    key: &'static str,
+    value: &'static str,
+}
+
+#[derive(Debug)]
 struct Request {
     method: String,
     uri: String,
@@ -8,10 +14,21 @@ struct Request {
     body: String,
 }
 
-#[derive(Debug)]
-struct Header {
-    key: &'static str,
-    value: &'static str,
+impl Request {
+    fn from_env() -> Self {
+        Self {
+            method: {
+                env::var("REQUEST_METHOD").unwrap()
+            },
+            uri: {
+                env::var("REQUEST_URI").unwrap()
+            },
+            headers: {
+                vec![]
+            },
+            body: String::new(),
+        }
+    }
 }
 
 struct Response {
@@ -28,23 +45,6 @@ fn respond(response: &Response) {
     println!("\n{0}", response.body);
 }
 
-fn parse_request() -> Request {
-    let request = Request {
-        method: {
-            env::var("REQUEST_METHOD").unwrap()
-        },
-        uri: {
-            env::var("REQUEST_URI").unwrap()
-        },
-        headers: {
-            vec![]
-        },
-        body: String::new(),
-    };
-
-    request
-}
-
 fn print_env(request: &Request, response: &mut Response) {
     response.headers.push(Header { key: "Content-Type", value: "text/plain" });
 
@@ -52,11 +52,11 @@ fn print_env(request: &Request, response: &mut Response) {
         response.body.push_str(&format!("{0}: {1}\n", key, value));
     }
 
-    response.body.push_str(&format!("\nRequest info: {:?}", request));
+    response.body.push_str(&format!("\nRequest info: {:#?}", request));
 }
 
 fn main() {
-    let request = parse_request();
+    let request = Request::from_env();
     let mut response = Response {
         status: 200,
         headers: vec![Header { key: "SMRS-Version", value: "0.0.1" }],
