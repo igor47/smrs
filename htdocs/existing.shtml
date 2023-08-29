@@ -1,0 +1,89 @@
+<!--#include virtual="/header.html" -->
+
+<body>
+  <div class="container" style="padding-top: 2em;">
+    <!--#include virtual="/alerts.html" -->
+    <div class="row" style="margin-top: 1em; margin-bottom: 1em;">
+      <div class="nine columns">
+        <h4 style="margin-bottom: 0;"><a href="/">Home</a> &gt; Your Links</h4>
+      </div>
+    </div>
+    <div class="row">
+      <div class="two-thirds column">
+        <p>
+          Your links are associated with your session ID.
+          Your session ID is stored in a cookie on your browser.
+          If your clear your cookies or change devices, you will lose access to your links.
+          Your session ID is currently:
+        </p>
+        <p x-data x-init="$store.smrs.loadSession()">
+          <span x-text="$store.smrs.session" style="padding-left: 3em; color: red;"></span>
+        </p>
+        <p>
+          Write down your session ID if you want to keep it.
+          Use the field below to recover your session -- or simply to pick a new one you like better!
+        </p>
+
+        <label for="recoverSessionId">Recover Session ID:</label>
+        <div class="row" x-data=" { session: '' } ">
+          <div class="nine columns">
+            <input
+              id="recoverSessionId"
+              class="u-full-width"
+              type="text"
+              placeholder="YourOldSessionId"
+              minlength="8"
+              x-model="session" />
+          </div>
+          <div class="three columns">
+            <button class="button-primary" type="button" @click="
+              const newSession = await postSession(session);
+              $store.smrs.session = newSession;
+              session = '';
+            ">Recover</button>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="one-half column" style="padding-top: 1em;">
+        <table class="u-full-width"
+          x-data=" { links: [] } "
+          x-init="
+            $watch('$store.smrs.session', async () => { links = await listLinks() });
+            links = await listLinks();
+            console.log(links);
+          "
+        >
+          <thead>
+            <tr>
+              <th>Short URL</th>
+              <th>Destination</th>
+              <th>Created</th>
+              <th>Forget</th>
+            </tr>
+          </thead>
+          <tbody id="linksTableBody">
+            <template x-for="link in links" :key="link.token">
+              <tr x-data="{ get href() { return window.location.origin + '/to/' + link.token; } }">
+                <td><a :href="href" target="_blank" x-text="link.token"></a></td>
+                <td x-text="link.url"></td>
+                <td x-text="link.created_at"></td>
+                <td>
+                  <button class="button" type="button" @click="
+                    const forgottenToken = await forget(link.token);
+                    $store.smrs.addAlert(`Link ${forgottenToken} has been forgotten!`, 'success');
+                    links = await listLinks(); 
+                    "
+                  >
+                    Forget
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

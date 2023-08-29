@@ -1,0 +1,11 @@
+    <div class="row" x-data>
+      <div class="nine columns">
+        <template x-for="alert in $store.smrs.alerts">
+          <div :class="alert.type">
+            <span x-html="alert.msg"></span>
+            <button class="button" type="button" @click="$store.smrs.removeAlert(alert.id)">Ok!</button>
+          </div>
+        </template>
+      </div>
+    </div>
+

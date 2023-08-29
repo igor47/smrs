@@ -1,0 +1,63 @@
+<!--#include virtual="/header.html" -->
+
+<body>
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container" style="padding-top: 2em;">
+    <!--#include virtual="/alerts.html" -->
+    <div class="row" style="margin-top: 1em; margin-bottom: 1em;">
+      <div class="nine columns">
+        <h4 style="margin-bottom: 0;">Moomers Link Shortener</h4>
+      </div>
+      <div class="three columns" x-data x-init="$store.smrs.loadSession()">
+        <span style="font-size: 0.8em">Your session ID is:</span><br>
+        <span x-text="$store.smrs.session"></span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="one-half column">
+        <form x-data=" { url: '', token: '' } " @submit.prevent="
+          const newToken = await save(url, token);
+          const shortUrl = window.location.origin + '/to/' + newToken;
+          const msg = `Created short URL <a href='${shortUrl}'>${newToken}</a>`;
+          $store.smrs.addAlert(msg, 'success');
+          url = ''; token = '';
+          "
+        >
+          <div class="row">
+            <label for="originalUrlInput">Original URL:</label>
+            <input
+              id="originalUrlInput" 
+              class="u-full-width"
+              x-model="url"
+              type="url"
+              placeholder="https://example.com/very/long/url"
+              required
+              minlength="8"
+            />
+          </div>
+
+          <div class="row">
+            <label for="desiredAliasInput">Desired Alias:</label>
+            <input
+              id="desiredAliasInput"
+              class="u-full-width"
+              x-model="token"
+              type="text"
+              placeholder="alias"
+              minlength="5"
+            />
+          </div>
+
+          <input class="button-primary" type="submit" value="Shorten!" />
+          <a href="/existing.shtml" class="button" type="button">See Existing</a>
+        </form>
+      </div>
+
+      <div class="one-half column catbox">
+        <img src="images/cat.png">
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
   <!-- Basic Page Needs
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <meta charset="utf-8">
@@ -19,9 +18,14 @@
 
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/skeleton.css">
-  <link rel="stylesheet" href="css/smrs.css">
+  <link rel="stylesheet" href="css/normalize.css" />
+  <link rel="stylesheet" href="css/skeleton.css" />
+  <link rel="stylesheet" href="css/smrs.css" />
+
+  <!-- JS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <script defer src="js/alpinejs3.min.js"></script>
+  <script type="text/javascript" src="js/smrs.js"></script>
 
   <!-- Favicon
     image from:
@@ -37,44 +41,4 @@
   <link rel="manifest" href="images/site.webmanifest">
 
 </head>
-<body>
 
-  <!-- Primary Page Layout
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div class="container">
-    <div class="row">
-      <div class="one-half column" style="padding-top: 10%;">
-        <h4>Moomers Link Shortener</h4>
-        <form>
-          <div class="row">
-            <label for="originalUrlInput">Original URL:</label>
-            <input
-              class="u-full-width"
-              type="text"
-              placeholder="https://example.com/very/long/url"
-              id="originalUrlInput" />
-          </div>
-
-          <div class="row">
-            <label for="desiredAliasInput">Desired Alias:</label>
-            <input
-              class="u-full-width"
-              type="text"
-              placeholder="alias"
-              id="desiredAliasInput" />
-          </div>
-
-          <input class="button-primary" type="submit" value="Shorten!" />
-        </form>
-      </div>
-
-      <div class="one-half column catbox">
-        <img src="images/cat.png">
-      </div>
-    </div>
-  </div>
-
-<!-- End Document
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-</body>
-</html>

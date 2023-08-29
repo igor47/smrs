@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use cgi::{Request, Response};
 
 fn print_env(request: &Request, response: &mut Response) {
+    response.status = 200;
     response.add_header("Content-Type", "text/plain");
 
     for (key, value) in env::vars() {
@@ -40,6 +41,7 @@ struct ShowSessionResp {
 }
 
 fn show_session(_request: &Request, response: &mut Response) {
+    response.status = 200;
     response.json(&ShowSessionResp {
         session: response.session.as_ref().unwrap().to_string(),
     });
@@ -54,6 +56,7 @@ fn set_session(request: &Request, response: &mut Response) {
     let set_session = request.json::<SetSessionReq>();
     match set_session {
         Ok(set_session) => {
+            response.status = 200;
             response.set_session(Some(&set_session.session));
             response.json(&ShowSessionResp {
                 session: response.session.as_ref().unwrap().to_string(),
@@ -78,6 +81,7 @@ struct ShortenResp {
     success: bool,
     token: String,
     requested: String,
+    url: String,
 }
 
 fn shorten(request: &Request, response: &mut Response) {
@@ -91,7 +95,7 @@ fn shorten(request: &Request, response: &mut Response) {
         }
     };
     let token = match shorten.token {
-        Some(token) => token,
+        Some(token) => if token.len() > 5 { token } else { token::generate(token::TokenType::URL) },
         None => token::generate(token::TokenType::URL),
     };
 
@@ -119,6 +123,7 @@ fn shorten(request: &Request, response: &mut Response) {
                     success: true,
                     token: token_attempt,
                     requested: token,
+                    url: shorten.url,
                 });
                 break;
             },
@@ -196,7 +201,10 @@ fn list(_request: &Request, response: &mut Response) {
         }
     };
 
-    response.json(&links)
+    response.status = 200;
+    response.json(&ListResp {
+        links: links,
+    });
 }
 
 #[derive(Deserialize)]
@@ -235,14 +243,14 @@ fn forget(request: &Request, response: &mut Response) {
                     response.status = 404;
                     response.json(&ForgetResp {
                         success: false,
-                        token: token,
+                        token,
                     });
                 },
                 _ => {
                     response.status = 200;
                     response.json(&ForgetResp {
                         success: true,
-                        token: token,
+                        token,
                     });
                 }
             }
@@ -267,6 +275,9 @@ fn main() {
         }
     };
 
+    // our default response is a 404
+    not_found(&mut response);
+
     // init session, either from the request(login), or from cookies, or create a new one
     if (request.method == "POST") && (request.path() == "/session") {
         set_session(&request, &mut response);
@@ -288,8 +299,6 @@ fn main() {
         list(&request, &mut response);
     } else if (request.method == "POST") && (request.path() == "/forget") {
         forget(&request, &mut response);
-    } else {
-        not_found(&mut response);
     }
 
     response.send();
