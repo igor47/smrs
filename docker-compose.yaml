@@ -11,3 +11,6 @@ services:
       - type: bind
         source: ./conf
         target: /smrs/conf
+      - type: bind
+        source: ./data
+        target: /smrs/data

@@ -1,6 +1,7 @@
 use std::env;
 use std::path::PathBuf;
 
+use serde::{Serialize};
 use rusqlite::{Connection, Result as SqlResult};
 
 const DB_FILE: &str = "smrs.db";
@@ -11,19 +12,18 @@ const SCHEMA_VERSION: u32 = 1;
 fn initialize(conn: &Connection) -> Result<(), String> {
     conn.execute(
         "CREATE TABLE links (
-            id INTEGER PRIMARY KEY,
-            token TEXT NOT NULL UNIQUE,
+            token TEXT PRIMARY KEY NOT NULL,
             url TEXT NOT NULL,
             session TEXT NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            deleted_at DATETIME
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+            deleted_at INTEGER DEFAULT NULL
         )", (),
     ).map_err(|err| err.to_string())?;
 
     conn.execute(
         "CREATE TABLE schema (
             version UNSIGNED INTEGER NOT NULL,
-            update_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            update_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         )", (),
     ).map_err(|err| err.to_string())?;
 
@@ -79,4 +79,65 @@ pub fn open() -> Result<Connection, String> {
     }
 
     Ok(conn)
+}
+
+pub fn create_link(conn: &Connection, token: &str, url: &str, session: &str) -> SqlResult<()> {
+    conn.execute(
+        "INSERT INTO links (token, url, session) VALUES (?, ?, ?)",
+        (token, url, session)
+    )?;
+
+    Ok(())
+}
+
+pub fn get_link(conn: &Connection, token: &str) -> Result<Option<String>, String> {
+    let url: String = match conn.query_row(
+        "SELECT url FROM links WHERE token = ? AND deleted_at IS NULL",
+        (token,),
+        |row| row.get(0)
+    ) {
+        Ok(url) => url,
+        Err(err) => return Err(err.to_string()),
+    };
+
+    Ok(Some(url))
+}
+
+pub fn delete_link(conn: &Connection, token: &str, session: &str) -> SqlResult<usize> {
+    let result = conn.execute(
+        "UPDATE links SET deleted_at = strftime('%s', 'now') WHERE token = ? AND session = ?",
+        (token, session)
+    )?;
+
+    Ok(result)
+}
+
+#[derive(Serialize)]
+pub struct Link {
+    pub token: String,
+    pub url: String,
+    pub created_at: i64,
+}
+
+pub fn list_links(conn: &Connection, session: &str) -> SqlResult<Vec<Link>> {
+    let mut stmt = conn.prepare(
+        "SELECT token, url, created_at FROM links WHERE session = ? AND deleted_at IS NULL ORDER BY created_at DESC"
+    )?;
+    let link_iter = stmt.query_map(
+        (session,),
+        |row| {
+            let token: String = row.get(0)?;
+            let url: String = row.get(1)?;
+            let created_at: i64 = row.get(2)?;
+
+            Ok(Link {
+                token,
+                url,
+                created_at,
+            })
+        }
+    )?;
+
+    let links: SqlResult<Vec<Link>> = link_iter.collect();
+    return links
 }
