@@ -160,7 +160,7 @@ impl Response {
         self.add_header(
             "Set-Cookie",
             &format!(
-                "{}={}; SameSite=strict; Secure; Max-Age={}",
+                "{}={}; SameSite=strict; Secure; Max-Age={}; Path=/",
                 SESSION_COOKIE_NAME,
                 self.session.as_ref().unwrap(),
                 SESSION_COOKIE_MAX_AGE
