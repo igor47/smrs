@@ -4,23 +4,34 @@
 
 This repository contains the source code for a cgi-dispatched link shortener written in rust.
 You can host this project in your own environment using the instructions below.
-Alternatively, you can use my hosted version at [https://mmrs.link](https://mmrs.link).
 
 ## Why SMRS
 
-Links on the web are getting ever more bloated.
-Don't participate!
-Shorten those bastards.
-
+Links on the web are getting increasingly more bloated.
+Friends don't send friends multi-line links!
 However, third-party link services are a privacy nightmare.
-Whether you self-host or use my hosted version, you can be sure that your clicks/opens are not being tracked.
+But mainly, I wanted to learn Rust and this seemed like a simple project.
+
+## Features
 
 This project is meant to be minimal and simple.
+User features:
+
+* Minimal, responsive UI
+* Simple API (see below)
+* Generates three-word short urls
+* Allows you to optionally pick your short url
+
+Software features:
+
 * We allow a real web server (Apache2) to handle TLS termination and static file serving.
 * We execute the rust binary via CGI to implement the API and interact with [sqlite](https://sqlite.org/index.html).
 * The front-end uses Apache's [SSIs](https://httpd.apache.org/docs/current/howto/ssi.html) to render static pages with a common header.
 * We use a little bit of [Alpine.js](https://alpinejs.dev/) for interactive elements.
 * There is no login, but you can see and set your own session cookie to keep track of your shortened links.
+## Screenshot
+
+![Screenshot](./screenshot.png)
 
 ## Installation
 
