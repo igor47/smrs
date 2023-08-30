@@ -1,0 +1,14 @@
+# git repo
+.git/
+
+# any local build artifacts
+target/
+
+# our data dir
+data/**
+
+# our docker-compose file
+docker-compose.yaml
+
+# the cgi file we use for local testing
+htdocs/smrs.cgi

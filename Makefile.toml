@@ -9,8 +9,8 @@ command = "cargo"
 args = ["build", "--target", "x86_64-unknown-linux-musl"]
 
 [tasks.devenv]
-command = "docker-compose"
-args = ["up", "-d"]
+command = "docker"
+args = ["compose", "up", "dev", "-d"]
 
 [tasks.devenv-shell]
 script = "docker exec -ti smrs-httpd-1 /bin/sh"

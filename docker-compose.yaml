@@ -1,7 +1,9 @@
 version: "3.9"
 services:
-  httpd:
-    build: .
+  dev:
+    build:
+      target: dev
+      context: .
     ports:
       - "8000:8000"
     volumes:
@@ -11,6 +13,15 @@ services:
       - type: bind
         source: ./conf
         target: /smrs/conf
+      - type: bind
+        source: ./data
+        target: /smrs/data
+
+  prod:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
       - type: bind
         source: ./data
         target: /smrs/data
