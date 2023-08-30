@@ -1,6 +1,6 @@
 [package]
 name = "smrs"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Igor Serebryany <igor47@moomers.org>"]
 edition = "2021"
 

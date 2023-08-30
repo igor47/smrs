@@ -11,27 +11,27 @@
     <div class="row">
       <div class="two-thirds column">
         <p>
-          Your links are associated with your session ID.
-          Your session ID is stored in a cookie on your browser.
+          Your links are associated with your ID.
+          Your ID is stored in a cookie on your browser.
           If your clear your cookies or change devices, you will lose access to your links.
-          Your session ID is currently:
+          Your ID is currently:
         </p>
         <p x-data x-init="$store.smrs.loadSession()">
           <span x-text="$store.smrs.session" style="padding-left: 3em; color: red;"></span>
         </p>
         <p>
-          Write down your session ID if you want to keep it.
-          Use the field below to recover your session -- or simply to pick a new one you like better!
+          Write down your ID if you want to keep it.
+          Use the field below to restore your ID -- or simply to pick a new one you like better!
         </p>
 
-        <label for="recoverSessionId">Recover Session ID:</label>
+        <label for="recoverSessionId">Change ID:</label>
         <div class="row" x-data=" { session: '' } ">
           <div class="nine columns">
             <input
               id="recoverSessionId"
               class="u-full-width"
               type="text"
-              placeholder="YourOldSessionId"
+              placeholder="DesiredSessionID"
               minlength="8"
               x-model="session" />
           </div>
@@ -40,13 +40,10 @@
               const newSession = await postSession(session);
               $store.smrs.session = newSession;
               session = '';
-            ">Recover</button>
+            ">Change</button>
           </div>
         </div>
-      </div>
 
-
-      <div class="one-half column" style="padding-top: 1em;">
         <table class="u-full-width"
           x-data=" { links: [] } "
           x-init="
