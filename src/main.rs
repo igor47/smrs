@@ -9,6 +9,7 @@ use cgi::{Request, Response};
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
+#[cfg(debug_assertions)]
 fn print_env(request: &Request, response: &mut Response) {
     response.status = Some(200);
     response.add_header("Content-Type", "text/plain");
@@ -18,6 +19,13 @@ fn print_env(request: &Request, response: &mut Response) {
     }
 
     response.body.push_str(&format!("\nRequest info: {:#?}", request));
+}
+
+#[cfg(not(debug_assertions))]
+fn print_env(_request: &Request, response: &mut Response) {
+    response.status = Some(403);
+    response.add_header("Content-Type", "text/plain");
+    response.body = String::from("Forbidden");
 }
 
 fn not_found(response: &mut Response) {
