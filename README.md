@@ -1,4 +1,4 @@
-![Docker Build](https://github.com/igor47/smrs/actions/workflows/publish.yml/badge.svg)
+![Docker Build](https://github.com/igor47/smrs/actions/workflows/publish.yaml/badge.svg)
 
 # SMRS
 
