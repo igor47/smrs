@@ -7,8 +7,10 @@ use serde::{Deserialize, Serialize};
 
 use cgi::{Request, Response};
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 fn print_env(request: &Request, response: &mut Response) {
-    response.status = 200;
+    response.status = Some(200);
     response.add_header("Content-Type", "text/plain");
 
     for (key, value) in env::vars() {
@@ -19,7 +21,7 @@ fn print_env(request: &Request, response: &mut Response) {
 }
 
 fn not_found(response: &mut Response) {
-    response.status = 404;
+    response.status = Some(404);
     response.add_header("Content-Type", "text/plain");
     response.body = String::from("Not found");
 }
@@ -28,7 +30,7 @@ fn get_db(response: &mut Response) -> Option<rusqlite::Connection> {
     match store::open() {
         Ok(db) => Some(db),
         Err(err) => {
-            response.status = 500;
+            response.status = Some(500);
             response.body = String::from(format!("Failed to open database: {}", err));
             None
         }
@@ -41,7 +43,7 @@ struct ShowSessionResp {
 }
 
 fn show_session(_request: &Request, response: &mut Response) {
-    response.status = 200;
+    response.status = Some(200);
     response.json(&ShowSessionResp {
         session: response.session.as_ref().unwrap().to_string(),
     });
@@ -56,14 +58,14 @@ fn set_session(request: &Request, response: &mut Response) {
     let set_session = request.json::<SetSessionReq>();
     match set_session {
         Ok(set_session) => {
-            response.status = 200;
+            response.status = Some(200);
             response.set_session(Some(&set_session.session));
             response.json(&ShowSessionResp {
                 session: response.session.as_ref().unwrap().to_string(),
             });
         },
         Err(err) => {
-            response.status = 400;
+            response.status = Some(400);
             response.add_header("Content-Type", "text/plain");
             response.body = String::from(format!("Invalid request: {}", err));
         }
@@ -89,7 +91,7 @@ fn shorten(request: &Request, response: &mut Response) {
     let shorten = match shorten {
         Ok(shorten) => shorten,
         Err(err) => {
-            response.status = 400;
+            response.status = Some(400);
             response.body = String::from(format!("Invalid request: {}", err));
             return;
         }
@@ -118,7 +120,7 @@ fn shorten(request: &Request, response: &mut Response) {
             &db, &token_attempt, &shorten.url, &response.session.as_ref().unwrap()
         ) {
             Ok(_) => {
-                response.status = 200;    
+                response.status = Some(200);    
                 response.json(&ShortenResp {
                     success: true,
                     token: token_attempt,
@@ -128,7 +130,7 @@ fn shorten(request: &Request, response: &mut Response) {
                 break;
             },
             Err(err) => {
-                response.status = 500;
+                response.status = Some(500);
 
                 let sqlite_err = err.sqlite_error();
                 match sqlite_err {
@@ -164,18 +166,18 @@ fn redirect(request: &Request, response: &mut Response) {
         Ok(url) => {
             match url {
                 Some(url) => {
-                    response.status = 308;
+                    response.status = Some(308);
                     response.add_header("Location", &url);
                 },
                 None => {
-                    response.status = 404;
+                    response.status = Some(404);
                     response.add_header("Content-Type", "text/plain");
                     response.body = String::from("Not found");
                 }
             }
         },
         Err(err) => {
-            response.status = 500;
+            response.status = Some(500);
             response.body = String::from(format!("Failed to get link: {}", err));
         }
     }
@@ -195,15 +197,15 @@ fn list(_request: &Request, response: &mut Response) {
     let links = match store::list_links(&db, &response.session.as_ref().unwrap()) {
         Ok(links) => links,
         Err(err) => {
-            response.status = 500;
+            response.status = Some(500);
             response.body = String::from(format!("Failed to list links: {}", err));
             return;
         }
     };
 
-    response.status = 200;
+    response.status = Some(200);
     response.json(&ListResp {
-        links: links,
+        links,
     });
 }
 
@@ -223,7 +225,7 @@ fn forget(request: &Request, response: &mut Response) {
     let token = match forget {
         Ok(forget) => forget.token,
         Err(err) => {
-            response.status = 400;
+            response.status = Some(400);
             response.body = String::from(format!("Invalid request: {}", err));
             return;
         }
@@ -240,14 +242,14 @@ fn forget(request: &Request, response: &mut Response) {
         Ok(num) => {
             match num {
                 0 => {
-                    response.status = 404;
+                    response.status = Some(404);
                     response.json(&ForgetResp {
                         success: false,
                         token,
                     });
                 },
                 _ => {
-                    response.status = 200;
+                    response.status = Some(200);
                     response.json(&ForgetResp {
                         success: true,
                         token,
@@ -256,7 +258,7 @@ fn forget(request: &Request, response: &mut Response) {
             }
         },
         Err(err) => {
-            response.status = 500;
+            response.status = Some(500);
             response.body = String::from(format!("Failed to forget link: {}", err));
         }
     }
@@ -268,15 +270,12 @@ fn main() {
     let request = match request {
         Ok(request) => request,
         Err(err) => {
-            response.status = 400;
+            response.status = Some(400);
             response.body = String::from(format!("Invalid request: {}", err));
             response.send();
             return;
         }
     };
-
-    // our default response is a 404
-    not_found(&mut response);
 
     // init session, either from the request(login), or from cookies, or create a new one
     if (request.method == "POST") && (request.path() == "/session") {
@@ -299,6 +298,11 @@ fn main() {
         list(&request, &mut response);
     } else if (request.method == "POST") && (request.path() == "/forget") {
         forget(&request, &mut response);
+    }
+
+    // if we didn't already set a status, we never matched a path
+    if let None = response.status {
+        not_found(&mut response);
     }
 
     response.send();

@@ -124,7 +124,7 @@ impl Request {
 }
 
 pub struct Response {
-    pub status: u16,
+    pub status: Option<u16>,
     pub headers: Vec<Header>,
     pub body: String,
 
@@ -134,12 +134,12 @@ pub struct Response {
 impl Response {
     pub fn new() -> Response {
         let mut response = Response {
-            status: 200,
+            status: None,
             headers: Vec::new(),
             body: String::new(),
             session: None,
         };
-        response.add_header("SMRS-Version", "0.0.1");
+        response.add_header("SMRS-Version", crate::VERSION);
         response
     }
 
@@ -175,8 +175,14 @@ impl Response {
         self.set_session(request.cookie(SESSION_COOKIE_NAME));
     }
 
-    pub fn send(&self) {
-        println!("Status: {0}", self.status);
+    pub fn send(&mut self) {
+        if let None = self.status {
+            self.status = Some(500);
+            self.add_header("Content-Type", "text/plain");
+            self.body = String::from("No response generated")
+        }
+
+        println!("Status: {0}", self.status.unwrap());
         for header in &self.headers {
             println!("{0}: {1}", header.key, header.value);
         }
@@ -188,7 +194,7 @@ impl Response {
         match serde_json::to_string(data) {
             Ok(body) => self.body = body,
             Err(_) => {
-                self.status = 500;
+                self.status = Some(500);
                 self.body = String::from(r#"{{"error": "Failed to serialize response"}}"#);
             }
         }
